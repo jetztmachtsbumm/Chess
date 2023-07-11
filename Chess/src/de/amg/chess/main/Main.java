@@ -2,6 +2,7 @@ package de.amg.chess.main;
 
 import de.amg.chess.pieces.Piece;
 import de.amg.chess.util.FieldDefaultPieces;
+import jdk.jshell.spi.ExecutionControl;
 
 import javax.swing.*;
 import java.awt.*;
@@ -14,9 +15,11 @@ public class Main {
 
     public static Main instance;
 
-    private final JFrame frame;
-    private final JPanel panel;
-    private final Field[][] fields;
+    private JFrame menuFrame;
+
+    private JFrame gameFrame;
+    private JPanel gamePanel;
+    private Field[][] fields;
 
     private Piece currentSelectedPiece;
     private boolean mirrored;
@@ -24,14 +27,48 @@ public class Main {
     private Main() {
         instance = this;
 
-        frame = new JFrame();
-        frame.setBounds(0, 0, 1920, 1080);
-        frame.setUndecorated(true);
+        menuFrame = new JFrame();
+        menuFrame.setBounds(1920 / 2, 1080 / 2, 420, 420);
+        menuFrame.setLayout(null);
+        menuFrame.setResizable(false);
+        menuFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+
+        JButton singleplayerButton = new JButton("Singleplayer");
+        JButton multiplayerButton = new JButton("Multiplayer");
+        JButton quitButton = new JButton("Quit");
+
+        singleplayerButton.setBounds(130, 50, 150, 50);
+        multiplayerButton.setBounds(130, 150, 150, 50);
+        quitButton.setBounds(130, 250, 150, 50);
+
+        singleplayerButton.addActionListener(null);
+        multiplayerButton.addActionListener(e -> loadGameWindow());
+        quitButton.addActionListener(e -> menuFrame.dispose());
+
+        menuFrame.add(singleplayerButton);
+        menuFrame.add(multiplayerButton);
+        menuFrame.add(quitButton);
+
+        menuFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        menuFrame.setLocationRelativeTo(null);
+        menuFrame.setVisible(true);
+    }
+
+    public static void main(String[] args) {
+        new Main();
+    }
+
+    private void loadGameWindow(){
+        menuFrame.dispose();
+
+        gameFrame = new JFrame();
+        gameFrame.setBounds(0, 0, 1920, 1080);
+        gameFrame.setUndecorated(true);
 
         fields = new Field[8][8];
         createFields();
 
-        panel = new JPanel(){
+        gamePanel = new JPanel(){
             @Override
             public void paint(Graphics g) {
                 int fieldSize = 90;
@@ -60,12 +97,12 @@ public class Main {
             }
         };
 
-        frame.add(panel);
-        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
+        gameFrame.add(gamePanel);
+        gameFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        gameFrame.setLocationRelativeTo(null);
+        gameFrame.setVisible(true);
 
-        frame.addMouseListener(new MouseListener() {
+        gameFrame.addMouseListener(new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 int x = e.getX() / 90;
@@ -82,7 +119,7 @@ public class Main {
                 }else{
                     fields[x][y].setPiece(currentSelectedPiece);
                     currentSelectedPiece = null;
-                    panel.repaint();
+                    gamePanel.repaint();
                 }
             }
 
@@ -107,20 +144,15 @@ public class Main {
             }
         });
 
-        frame.addKeyListener(new KeyAdapter() {
+        gameFrame.addKeyListener(new KeyAdapter() {
             @Override
             public void keyReleased(KeyEvent e) {
                 if(e.getKeyChar() == 'r'){
                     mirrored = !mirrored;
-                    panel.repaint();
+                    gamePanel.repaint();
                 }
             }
         });
-
-    }
-
-    public static void main(String[] args) {
-        new Main();
     }
 
     private void createFields(){
@@ -134,12 +166,12 @@ public class Main {
         }
     }
 
-    public JFrame getFrame() {
-        return frame;
+    public JFrame getGameFrame() {
+        return gameFrame;
     }
 
-    public JPanel getPanel() {
-        return panel;
+    public JPanel getGamePanel() {
+        return gamePanel;
     }
 
     public Field[][] getFields() {
