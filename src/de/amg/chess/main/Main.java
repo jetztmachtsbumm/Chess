@@ -35,10 +35,19 @@ public class Main {
     private Main() {
         instance = this;
 
+        loadMainMenuWindow();
+
+        position = Position.fromFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+        array = position.getArray();
+        moves = position.getAllPlayableMoves();
+    }
+
+    private void loadMainMenuWindow(){
         menuFrame = new JFrame();
         menuFrame.setBounds(1920 / 2, 1080 / 2, 420, 420);
         menuFrame.setLayout(null);
         menuFrame.setResizable(false);
+        menuFrame.setTitle("Chess");
         menuFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
         JButton singleplayerButton = new JButton("Singleplayer");
@@ -60,13 +69,6 @@ public class Main {
         menuFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         menuFrame.setLocationRelativeTo(null);
         menuFrame.setVisible(true);
-
-        position = Position.fromFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-        array = position.getArray();
-        moves = position.getAllPlayableMoves();
-        //System.out.println(moves);
-
-
     }
 
     private void loadGameWindow(){
@@ -75,6 +77,22 @@ public class Main {
         gameFrame = new JFrame();
         gameFrame.setBounds(0, 0, 1920, 1080);
         gameFrame.setUndecorated(true);
+
+        JButton mirrorButton = new JButton("Mirror");
+        JButton mainMenuButton = new JButton("MainMenu");
+
+        mirrorButton.setBounds(900, 20, 150, 50);
+        mainMenuButton.setBounds(1100, 20, 150, 50);
+
+        mirrorButton.addActionListener(e -> {
+            mirrored = !mirrored;
+            gamePanel.repaint();
+        });
+        mainMenuButton.addActionListener(e -> {
+            loadMainMenuWindow();
+            gameFrame.dispose();
+        });
+
         gamePanel = new JPanel(){
             @Override
             public void paint(Graphics g) {
@@ -112,9 +130,12 @@ public class Main {
                         }
                     }
                 }
+                add(mirrorButton);
+                add(mainMenuButton);
             }
         };
 
+        gamePanel.setLayout(null);
 
         gameFrame.add(gamePanel);
         gameFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -195,17 +216,6 @@ public class Main {
 
             }
         });
-
-        gameFrame.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyReleased(KeyEvent e) {
-                if(e.getKeyChar() == 'r'){
-                    mirrored = !mirrored;
-                    gamePanel.repaint();
-                }
-            }
-        });
-
     }
 
     public static void main(String[] args) {
