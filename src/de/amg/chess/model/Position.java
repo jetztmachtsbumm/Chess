@@ -559,27 +559,20 @@ public class Position {
     }
 
     public boolean isInMate(Color color){
-        if (getAvailableMoves(getKingLocation(color), false, true).isEmpty()) {
-            List<String> checkers = getCheckers(color);
-            if (checkers.isEmpty()) {
-                return false;
-            } else if (checkers.size() > 1) {
-                return true;
-            } else {
-                List<String> pieces = getAllPieces(color);
-                //pieces = pieces.stream().filter((p) -> getPiece(p).getType() != de.amg.chess.model.Pieces.KING).toList();
-                for (String st : pieces) {
-                    for (Move move : getAvailableMoves(st, false, true)) {
-                        Position p = this.copy();
-                        move.setPosition(p);
-                        move.apply();
-                        if (!p.isInCheck(color)) {
-                            return false;
-                        }
+        if (isInCheck(color) && getAvailableMoves(getKingLocation(color), false, true).isEmpty()) {
+            List<String> pieces = getAllPieces(color);
+            //pieces = pieces.stream().filter((p) -> getPiece(p).getType() != de.amg.chess.model.Pieces.KING).toList();
+            for (String st : pieces) {
+                for (Move move : getAvailableMoves(st, false, true)) {
+                    Position p = this.copy();
+                    move.setPosition(p);
+                    move.apply();
+                    if (!p.isInCheck(color)) {
+                        return false;
                     }
                 }
-                return true;
             }
+            return true;
         }
         else{
             return false;

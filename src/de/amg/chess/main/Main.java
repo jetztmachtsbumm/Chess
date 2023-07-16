@@ -7,8 +7,6 @@ import de.amg.chess.model.Pieces;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
@@ -31,6 +29,13 @@ public class Main {
 
     private String curSelPiecePos;
     private boolean mirrored;
+
+    private boolean promote;
+
+    private int px;
+    private int py;
+
+    private final int fieldSize = 90;
 
     private Main() {
         instance = this;
@@ -104,7 +109,6 @@ public class Main {
             @Override
             public void paint(Graphics g) {
                 super.paint(g);
-                int fieldSize = 90;
                 boolean white = true;
                 for(int x = 0; x < 8; x++){
                     for(int y = 0; y < 8; y++){
@@ -138,6 +142,27 @@ public class Main {
                         }
                     }
                 }
+                else if(promote){
+                    g.setColor(Color.WHITE);
+                    int xval = fieldSize*py;
+                    int yval = fieldSize*px;
+                    int factor = px == 7 ? -1 : 1;
+                    for (int i = 0; i < 4; i++){
+                        g.fillOval(xval, yval+factor*i*fieldSize, fieldSize, fieldSize);
+                    }
+                    if (px == 0){
+                        g.drawImage(Pieces.white_images.get(Pieces.QUEEN), xval, yval, this);
+                        g.drawImage(Pieces.white_images.get(Pieces.KNIGHT), xval, yval+factor*fieldSize, this);
+                        g.drawImage(Pieces.white_images.get(Pieces.ROOK), xval, yval+factor*fieldSize*2, this);
+                        g.drawImage(Pieces.white_images.get(Pieces.BISHOP), xval, yval+factor*fieldSize*3, this);
+                    }
+                    else if (px == 7){
+                        g.drawImage(Pieces.black_images.get(Pieces.QUEEN), xval, yval, this);
+                        g.drawImage(Pieces.black_images.get(Pieces.KNIGHT), xval, yval+factor*fieldSize, this);
+                        g.drawImage(Pieces.black_images.get(Pieces.ROOK), xval, yval+factor*fieldSize*2, this);
+                        g.drawImage(Pieces.black_images.get(Pieces.BISHOP), xval, yval+factor*fieldSize*3, this);
+                    }
+                }
                 add(mirrorButton);
                 add(mainMenuButton);
             }
@@ -153,8 +178,35 @@ public class Main {
         gameFrame.addMouseListener(new MouseListener() {
             @Override
             public void mouseReleased(MouseEvent e) {
-                int y = e.getX() / 90; // this is intentional
-                int x = e.getY() / 90;
+                if (promote){
+                    int xval = fieldSize*py;
+                    int yval = fieldSize*px;
+                    if (xval <= e.getX() && e.getX() <= xval+fieldSize && ((px == 0 && 0 <= e.getY() && fieldSize*4 > e.getY()) || (px == 7 && 1080 > e.getY() && fieldSize*4 <= e.getY()))){
+                        int val = (Math.abs(e.getY() - ((px==0) ? yval : yval+fieldSize))) / fieldSize;
+                        Pieces type = switch (val){
+                            case 0 -> Pieces.QUEEN;
+                            case 1 -> Pieces.KNIGHT;
+                            case 2 -> Pieces.ROOK;
+                            case 3 -> Pieces.BISHOP;
+                            default -> null;
+                        };
+                        for (Move move:moves){
+                            if (move.getDest().equals(position.intToString(px, py)) && move.getPromote() == type){
+                                move.apply();
+                                break;
+                            }
+                        }
+                        promote = false;
+                        moves = position.getAllPlayableMoves();
+                        //System.out.println(moves);
+                        gamePanel.repaint();
+                    }
+                    else{
+                        return;
+                    }
+                }
+                int y = e.getX() / fieldSize; // this is intentional
+                int x = e.getY() / fieldSize;
                 if (x < 0 || x > 7 || y < 0 || y > 7){
                     return;
                 }
@@ -172,6 +224,13 @@ public class Main {
                     boolean legal = false;
                     for (Move move:moves){
                         if (move.getOrigin().equals(curSelPiecePos) && move.getDest().equals(position.intToString(x, y))){
+                            if (move.getPromote() != null){
+                                promote = true;
+                                legal = true;
+                                px = x;
+                                py = y;
+                                break;
+                            }
                             legal = true;
                             move.apply();
                             break;
