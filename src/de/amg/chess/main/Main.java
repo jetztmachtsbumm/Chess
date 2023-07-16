@@ -62,6 +62,10 @@ public class Main {
         multiplayerButton.addActionListener(e -> loadGameWindow());
         quitButton.addActionListener(e -> menuFrame.dispose());
 
+        singleplayerButton.setFocusPainted(false);
+        multiplayerButton.setFocusPainted(false);
+        quitButton.setFocusPainted(false);
+
         menuFrame.add(singleplayerButton);
         menuFrame.add(multiplayerButton);
         menuFrame.add(quitButton);
@@ -93,9 +97,13 @@ public class Main {
             gameFrame.dispose();
         });
 
+        mirrorButton.setFocusPainted(false);
+        mainMenuButton.setFocusPainted(false);
+
         gamePanel = new JPanel(){
             @Override
             public void paint(Graphics g) {
+                super.paint(g);
                 int fieldSize = 90;
                 boolean white = true;
                 for(int x = 0; x < 8; x++){
