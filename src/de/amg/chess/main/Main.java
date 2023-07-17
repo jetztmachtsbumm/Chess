@@ -6,7 +6,6 @@ import de.amg.chess.model.Position;
 import de.amg.chess.model.Pieces;
 
 import javax.swing.*;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -40,6 +39,8 @@ public class Main {
     private final int fieldSize = 90;
 
     private final Font font1;
+
+    private JTextArea movesArea;
 
     private Main() {
         instance = this;
@@ -127,6 +128,7 @@ public class Main {
             moves = position.getAllPlayableMoves();
             currentSelectedPiece = null;
             promote = false;
+            movesArea.setText("");
             gamePanel.repaint();
         });
         positionResetButton.setFocusPainted(false);
@@ -150,6 +152,7 @@ public class Main {
                 moves = position.getAllPlayableMoves();
                 currentSelectedPiece = null;
                 promote = false;
+                movesArea.setText("");
                 gamePanel.repaint();
             }
             catch (Exception exception){
@@ -180,7 +183,21 @@ public class Main {
         });
         savePositionButton.setFocusPainted(false);
 
+        movesArea = new JTextArea(){
+            @Override
+            public void append(String str){
+                super.append(str);
+                setCaretPosition(getDocument().getLength());
+            }
+        };
+        movesArea.setEditable(false);
+        movesArea.setFont(font1);
+        movesArea.setLineWrap(true);
+        movesArea.setWrapStyleWord(true);
 
+        JScrollPane scrollPane = new JScrollPane(movesArea);
+        scrollPane.setBounds(0, 720, 1920, 360);
+        scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 
         gamePanel = new JPanel(){
             @Override
@@ -261,6 +278,8 @@ public class Main {
                 add(positionResetButton);
                 add(loadPositionButton);
                 add(savePositionButton);
+                add(scrollPane);
+                revalidate();
             }
         };
 
@@ -293,6 +312,7 @@ public class Main {
                         for (Move move:moves){
                             if (move.getDest().equals(position.intToString(px, py)) && move.getPromote() == type){
                                 move.apply();
+                                movesArea.append(move.toString() + " ");
                                 break;
                             }
                         }
@@ -337,6 +357,7 @@ public class Main {
                             }
                             legal = true;
                             move.apply();
+                            movesArea.append(move.toString() + " ");
                             break;
                         }
                     }
