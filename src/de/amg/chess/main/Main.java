@@ -6,9 +6,11 @@ import de.amg.chess.model.Position;
 import de.amg.chess.model.Pieces;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.io.*;
 
 public class Main {
 
@@ -37,6 +39,8 @@ public class Main {
 
     private final int fieldSize = 90;
 
+    private final Font font1;
+
     private Main() {
         instance = this;
 
@@ -45,6 +49,7 @@ public class Main {
         position = Position.fromFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
         array = position.getArray();
         moves = position.getAllPlayableMoves();
+        font1 = new Font("Arial", Font.PLAIN, 20);
     }
 
     private void loadMainMenuWindow(){
@@ -87,11 +92,11 @@ public class Main {
         gameFrame.setBounds(0, 0, 1920, 1080);
         gameFrame.setUndecorated(true);
 
-        JButton mirrorButton = new JButton("Mirror");
-        JButton mainMenuButton = new JButton("MainMenu");
+        JButton mainMenuButton = new JButton("Main Menu");
+        JButton mirrorButton = new JButton("Mirror Position");
 
-        mirrorButton.setBounds(900, 20, 150, 50);
-        mainMenuButton.setBounds(1100, 20, 150, 50);
+        mainMenuButton.setBounds(900, 285, 150, 50);
+        mirrorButton.setBounds(1100, 285, 150, 50);
 
         mirrorButton.addActionListener(e -> {
             mirrored = !mirrored;
@@ -105,10 +110,94 @@ public class Main {
         mirrorButton.setFocusPainted(false);
         mainMenuButton.setFocusPainted(false);
 
+        JLabel label_clock_white = new JLabel("WHITE CLOCK");
+        label_clock_white.setFont(font1);
+        JLabel label_clock_black = new JLabel("BLACK CLOCK");
+        label_clock_black.setFont(font1);
+        JTextField field_clock_white = new JTextField();
+        field_clock_white.setFont(font1);
+        JTextField field_clock_black = new JTextField();
+        field_clock_black.setFont(font1);
+
+        JButton positionResetButton = new JButton("Reset Position");
+        positionResetButton.setBounds(1300, 285, 150, 50);
+        positionResetButton.addActionListener(e -> {
+            position = Position.fromFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+            array = position.getArray();
+            moves = position.getAllPlayableMoves();
+            currentSelectedPiece = null;
+            promote = false;
+            gamePanel.repaint();
+        });
+        positionResetButton.setFocusPainted(false);
+
+        FileDialog fdl = new FileDialog(gameFrame, "Load a FEN file", FileDialog.LOAD);
+        fdl.setFile("*.fen");
+
+        JButton loadPositionButton = new JButton("Load Position");
+        loadPositionButton.setBounds(900, 385, 150, 50);
+        loadPositionButton.addActionListener(e -> {
+            fdl.setVisible(true);
+            String filename = fdl.getFile();
+            if (filename == null){
+                return;
+            }
+            try {
+                BufferedReader reader = new BufferedReader(new FileReader(fdl.getDirectory() + "/" + filename));
+                position = Position.fromFEN(reader.readLine());
+                reader.close();
+                array = position.getArray();
+                moves = position.getAllPlayableMoves();
+                currentSelectedPiece = null;
+                promote = false;
+                gamePanel.repaint();
+            }
+            catch (Exception exception){
+                fdl.setVisible(true);
+            }
+        });
+        loadPositionButton.setFocusPainted(false);
+
+        FileDialog fds = new FileDialog(gameFrame, "Save to FEN file", FileDialog.SAVE);
+        fds.setFile("*.fen");
+
+        JButton savePositionButton = new JButton("Save Position");
+        savePositionButton.setBounds(1100, 385, 150, 50);
+        savePositionButton.addActionListener(e -> {
+            fds.setVisible(true);
+            String filename = fds.getFile();
+            if (filename == null){
+                return;
+            }
+            try {
+                BufferedWriter writer = new BufferedWriter(new FileWriter(fds.getDirectory() + "/" + filename));
+                writer.write(position.toFEN());
+                writer.close();
+            }
+            catch (Exception exception){
+                fds.setVisible(true);
+            }
+        });
+        savePositionButton.setFocusPainted(false);
+
+
+
         gamePanel = new JPanel(){
             @Override
-            public void paint(Graphics g) {
-                super.paint(g);
+            public void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                if (mirrored){
+                    label_clock_white.setBounds(750, 110, 200, 50);
+                    label_clock_black.setBounds(750, 560, 200, 50);
+                    field_clock_white.setBounds(950, 110, 200, 50);
+                    field_clock_black.setBounds(950, 560, 200, 50);
+                }
+                else{
+                    label_clock_black.setBounds(750, 110, 200, 50);
+                    label_clock_white.setBounds(750, 560, 200, 50);
+                    field_clock_black.setBounds(950, 110, 200, 50);
+                    field_clock_white.setBounds(950, 560, 200, 50);
+                }
                 boolean white = true;
                 for(int x = 0; x < 8; x++){
                     for(int y = 0; y < 8; y++){
@@ -150,13 +239,13 @@ public class Main {
                     for (int i = 0; i < 4; i++){
                         g.fillOval(xval, yval+factor*i*fieldSize, fieldSize, fieldSize);
                     }
-                    if (px == 0){
+                    if ((px == 0 && !mirrored) || (px == 7 && mirrored)){
                         g.drawImage(Pieces.white_images.get(Pieces.QUEEN), xval, yval, this);
                         g.drawImage(Pieces.white_images.get(Pieces.KNIGHT), xval, yval+factor*fieldSize, this);
                         g.drawImage(Pieces.white_images.get(Pieces.ROOK), xval, yval+factor*fieldSize*2, this);
                         g.drawImage(Pieces.white_images.get(Pieces.BISHOP), xval, yval+factor*fieldSize*3, this);
                     }
-                    else if (px == 7){
+                    else if ((px == 7 && !mirrored) || (px == 0 && mirrored)){
                         g.drawImage(Pieces.black_images.get(Pieces.QUEEN), xval, yval, this);
                         g.drawImage(Pieces.black_images.get(Pieces.KNIGHT), xval, yval+factor*fieldSize, this);
                         g.drawImage(Pieces.black_images.get(Pieces.ROOK), xval, yval+factor*fieldSize*2, this);
@@ -165,6 +254,13 @@ public class Main {
                 }
                 add(mirrorButton);
                 add(mainMenuButton);
+                add(label_clock_white);
+                add(label_clock_black);
+                add(field_clock_white);
+                add(field_clock_black);
+                add(positionResetButton);
+                add(loadPositionButton);
+                add(savePositionButton);
             }
         };
 
@@ -190,6 +286,10 @@ public class Main {
                             case 3 -> Pieces.BISHOP;
                             default -> null;
                         };
+                        if (mirrored){
+                            px = 7 - px;
+                            py = 7 - py;
+                        }
                         for (Move move:moves){
                             if (move.getDest().equals(position.intToString(px, py)) && move.getPromote() == type){
                                 move.apply();
@@ -229,6 +329,10 @@ public class Main {
                                 legal = true;
                                 px = x;
                                 py = y;
+                                if (mirrored){
+                                    px = 7 - px;
+                                    py = 7 - py;
+                                }
                                 break;
                             }
                             legal = true;
