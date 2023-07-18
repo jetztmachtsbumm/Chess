@@ -45,8 +45,12 @@ public class Main {
     private JLabel label_clock_white;
     private JLabel label_clock_black;
 
+    private JCheckBox checkBox;
+
     private Clock whiteClock;
     private Clock blackClock;
+
+    private de.amg.chess.model.Color resigned = null;
 
     private Main() {
         instance = this;
@@ -158,6 +162,7 @@ public class Main {
             moves = position.getAllPlayableMoves();
             currentSelectedPiece = null;
             promote = false;
+            resigned = null;
             movesArea.setText("");
             whiteClock.stop();
             blackClock.stop();
@@ -184,6 +189,7 @@ public class Main {
                 moves = position.getAllPlayableMoves();
                 currentSelectedPiece = null;
                 promote = false;
+                resigned = null;
                 movesArea.setText("");
                 whiteClock.stop();
                 blackClock.stop();
@@ -225,6 +231,27 @@ public class Main {
         });
         stopClocksButton.setFocusPainted(false);
 
+        checkBox = new JCheckBox("Auto-Mirror");
+        checkBox.setBounds(1500, 297, 100, 25);
+        checkBox.setSelected(true);
+        checkBox.setFocusPainted(false);
+
+        JButton resignButtonWhite = new JButton("Resign");
+        resignButtonWhite.addActionListener(e -> {
+            if (resigned == null) {
+                resigned = de.amg.chess.model.Color.WHITE;
+                gamePanel.repaint();
+            }});
+        resignButtonWhite.setFocusPainted(false);
+
+        JButton resignButtonBlack = new JButton("Resign");
+        resignButtonBlack.addActionListener(e -> {
+            if (resigned == null) {
+                resigned = de.amg.chess.model.Color.BLACK;
+                gamePanel.repaint();
+            }});
+        resignButtonBlack.setFocusPainted(false);
+
         movesArea = new JTextArea(){
             @Override
             public void append(String str){
@@ -250,12 +277,16 @@ public class Main {
                     label_clock_black.setBounds(750, 560, 200, 50);
                     field_clock_white.setBounds(950, 110, 200, 50);
                     field_clock_black.setBounds(950, 560, 200, 50);
+                    resignButtonWhite.setBounds(750, 20, 100, 50);
+                    resignButtonBlack.setBounds(750, 650, 100, 50);
                 }
                 else{
                     label_clock_black.setBounds(750, 110, 200, 50);
                     label_clock_white.setBounds(750, 560, 200, 50);
                     field_clock_black.setBounds(950, 110, 200, 50);
                     field_clock_white.setBounds(950, 560, 200, 50);
+                    resignButtonBlack.setBounds(750, 20, 100, 50);
+                    resignButtonWhite.setBounds(750, 650, 100, 50);
                 }
                 int[] wk = null;
                 int[] bk = null;
@@ -269,17 +300,21 @@ public class Main {
                         wk = invertLocation(wk);
                         bk = invertLocation(bk);
                     }
+                    whiteClock.stop();
+                    blackClock.stop();
                 }
-                else if (position.isInCheck(position.getToPlay()) || flagged){
-                    kloc = position.stringToInt(position.getKingLocation(position.getToPlay()));
+                else if (position.isInCheck(position.getToPlay()) || flagged || resigned != null){
+                    kloc = position.stringToInt(position.getKingLocation(resigned == null ? position.getToPlay() : resigned));
                     if (mirrored){
                         kloc = invertLocation(kloc);
                     }
-                    if (position.isInMate(position.getToPlay()) || flagged){
-                        oloc = position.stringToInt(position.getKingLocation(position.getOpponent(position.getToPlay())));
+                    if (position.isInMate(position.getToPlay()) || flagged || resigned != null){
+                        oloc = position.stringToInt(position.getKingLocation(position.getOpponent(resigned == null ? position.getToPlay() : resigned)));
                         if (mirrored){
                             oloc = invertLocation(oloc);
                         }
+                        whiteClock.stop();
+                        blackClock.stop();
                     }
                 }
                 boolean white = true;
@@ -366,6 +401,9 @@ public class Main {
                 add(loadPositionButton);
                 add(savePositionButton);
                 add(stopClocksButton);
+                add(checkBox);
+                add(resignButtonWhite);
+                add(resignButtonBlack);
                 add(scrollPane);
                 revalidate();
             }
@@ -381,7 +419,7 @@ public class Main {
         gameFrame.addMouseListener(new MouseListener() {
             @Override
             public void mouseReleased(MouseEvent e) {
-                if (position.isInMate(position.getToPlay()) || position.isInRemis() || whiteClock.hasRunOut() || blackClock.hasRunOut()){
+                if (position.isInMate(position.getToPlay()) || position.isInRemis() || whiteClock.hasRunOut() || blackClock.hasRunOut() || resigned != null){
                     return;
                 }
                 if (promote){
@@ -411,6 +449,9 @@ public class Main {
                                 else{
                                     whiteClock.stop();
                                     blackClock.start();
+                                }
+                                if (checkBox.isSelected()){
+                                    mirrored = !mirrored;
                                 }
                                 break;
                             }
@@ -464,6 +505,9 @@ public class Main {
                             else{
                                 whiteClock.stop();
                                 blackClock.start();
+                            }
+                            if (checkBox.isSelected()){
+                                mirrored = !mirrored;
                             }
                             break;
                         }
