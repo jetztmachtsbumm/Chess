@@ -43,7 +43,6 @@ public class Clock {
             hoursString = String.format("%02d", this.hours);
 
             timeLabel.setText(getTimeString());
-            System.out.println(getTimeString());
         });
     }
 
