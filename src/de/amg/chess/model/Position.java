@@ -341,6 +341,18 @@ public class Position {
         return result;
     }
 
+    public List<String> getAllPiecesOfType(Pieces type){
+        List<String> result = new ArrayList<>();
+        for (int i=0; i<8; i++){
+            for (int j=0; j<8; j++){
+                if (array[i][j] != null && array[i][j].getType() == type){
+                    result.add("abcdefgh".charAt(j)+String.valueOf(8-i));
+                }
+            }
+        }
+        return result;
+    }
+
     public boolean isInvalid(int a, int b){
         return a < 0 || a >= array.length || b < 0 || b >= array.length;
     }
@@ -554,6 +566,17 @@ public class Position {
         return drawMoves >= 100 || repetitions >= 3;
     }
 
+    public boolean isInMaterialDeficiency() {
+        List<String> pieces = getPieceList();
+        for (String p:pieces){
+            Piece piece = getPiece(p);
+            Pieces type = piece.getType();
+            if (type == Pieces.QUEEN || type == Pieces.ROOK || type == Pieces.PAWN){
+                return false;
+            }
+        }
+        return getMaterialImbalance() == 0 && getAllPiecesOfType(Pieces.BISHOP).size() < 2 && getAllPiecesOfType(Pieces.KNIGHT).size() < 2;
+    }
     public boolean isInRemis(){
         return isInStalemate() || isInDraw();
     }

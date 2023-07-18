@@ -12,11 +12,13 @@ public class Clock {
     private String secondsString;
     private String minutesString;
     private String hoursString;
+    private JPanel gamePanel;
 
-    public Clock(int seconds, int minutes, int hours, Label timeLabel) {
+    public Clock(int seconds, int minutes, int hours, JLabel timeLabel, JPanel gamePanel) {
         this.seconds = seconds;
         this.minutes = minutes;
         this.hours = hours;
+        this.gamePanel = gamePanel;
 
         timer = new Timer(1000, e -> {
             this.seconds--;
@@ -30,6 +32,7 @@ public class Clock {
                     if(this.hours < 0){
                         //Time's up!
                         stop();
+                        gamePanel.repaint();
                         return;
                     }
                 }
@@ -50,6 +53,10 @@ public class Clock {
 
     public void stop(){
         timer.stop();
+    }
+
+    public boolean hasRunOut(){
+        return hours < 0;
     }
 
     public String getTimeString(){

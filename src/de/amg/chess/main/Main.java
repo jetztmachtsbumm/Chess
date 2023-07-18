@@ -4,6 +4,7 @@ import de.amg.chess.model.Move;
 import de.amg.chess.model.Piece;
 import de.amg.chess.model.Position;
 import de.amg.chess.model.Pieces;
+import de.amg.chess.clock.Clock;
 
 import javax.swing.*;
 import java.awt.*;
@@ -41,6 +42,11 @@ public class Main {
     private final Font font1;
 
     private JTextArea movesArea;
+    private JLabel label_clock_white;
+    private JLabel label_clock_black;
+
+    private Clock whiteClock;
+    private Clock blackClock;
 
     private Main() {
         instance = this;
@@ -51,6 +57,12 @@ public class Main {
         array = position.getArray();
         moves = position.getAllPlayableMoves();
         font1 = new Font("Arial", Font.PLAIN, 20);
+    }
+
+    public int[] invertLocation(int[] v){
+        v[0] = 7 - v[0];
+        v[1] = 7 - v[1];
+        return v;
     }
 
     private void loadMainMenuWindow(){
@@ -111,14 +123,32 @@ public class Main {
         mirrorButton.setFocusPainted(false);
         mainMenuButton.setFocusPainted(false);
 
-        JLabel label_clock_white = new JLabel("WHITE CLOCK");
+        label_clock_white = new JLabel("1:30:00");
         label_clock_white.setFont(font1);
-        JLabel label_clock_black = new JLabel("BLACK CLOCK");
+        label_clock_black = new JLabel("1:30:00");
         label_clock_black.setFont(font1);
+        whiteClock = new Clock(0, 30, 1, label_clock_white, gamePanel);
+        blackClock = new Clock(0, 30, 1, label_clock_black, gamePanel);
         JTextField field_clock_white = new JTextField();
         field_clock_white.setFont(font1);
+        field_clock_white.addActionListener(e -> {try{
+            whiteClock.stop();
+            blackClock.stop();
+            String[] parts = field_clock_white.getText().split(":");
+            whiteClock = new Clock(Integer.parseInt(parts[2]), Integer.parseInt(parts[1]), Integer.parseInt(parts[0]), label_clock_white, gamePanel);
+            label_clock_white.setText(field_clock_white.getText());
+            gamePanel.repaint();
+        } catch (Exception exception){}});
         JTextField field_clock_black = new JTextField();
         field_clock_black.setFont(font1);
+        field_clock_black.addActionListener(e -> {try{
+            blackClock.stop();
+            whiteClock.stop();
+            String[] parts = field_clock_black.getText().split(":");
+            blackClock = new Clock(Integer.parseInt(parts[2]), Integer.parseInt(parts[1]), Integer.parseInt(parts[0]), label_clock_black, gamePanel);
+            label_clock_black.setText(field_clock_black.getText());
+            gamePanel.repaint();
+        } catch (Exception exception){}});
 
         JButton positionResetButton = new JButton("Reset Position");
         positionResetButton.setBounds(1300, 285, 150, 50);
@@ -129,6 +159,8 @@ public class Main {
             currentSelectedPiece = null;
             promote = false;
             movesArea.setText("");
+            whiteClock.stop();
+            blackClock.stop();
             gamePanel.repaint();
         });
         positionResetButton.setFocusPainted(false);
@@ -153,6 +185,8 @@ public class Main {
                 currentSelectedPiece = null;
                 promote = false;
                 movesArea.setText("");
+                whiteClock.stop();
+                blackClock.stop();
                 gamePanel.repaint();
             }
             catch (Exception exception){
@@ -182,6 +216,14 @@ public class Main {
             }
         });
         savePositionButton.setFocusPainted(false);
+
+        JButton stopClocksButton = new JButton("Stop Clocks");
+        stopClocksButton.setBounds(1300, 385, 150, 50);
+        stopClocksButton.addActionListener(e -> {
+            whiteClock.stop();
+            blackClock.stop();
+        });
+        stopClocksButton.setFocusPainted(false);
 
         movesArea = new JTextArea(){
             @Override
@@ -215,6 +257,31 @@ public class Main {
                     field_clock_black.setBounds(950, 110, 200, 50);
                     field_clock_white.setBounds(950, 560, 200, 50);
                 }
+                int[] wk = null;
+                int[] bk = null;
+                int[] kloc = null;
+                int[] oloc = null;
+                boolean flagged = ((position.getToPlay() == de.amg.chess.model.Color.WHITE && whiteClock.hasRunOut()) || (position.getToPlay() == de.amg.chess.model.Color.BLACK && blackClock.hasRunOut()));
+                if (position.isInRemis()){
+                    wk = position.stringToInt(position.getKingLocation(de.amg.chess.model.Color.WHITE));
+                    bk = position.stringToInt(position.getKingLocation(de.amg.chess.model.Color.BLACK));
+                    if (mirrored){
+                        wk = invertLocation(wk);
+                        bk = invertLocation(bk);
+                    }
+                }
+                else if (position.isInCheck(position.getToPlay()) || flagged){
+                    kloc = position.stringToInt(position.getKingLocation(position.getToPlay()));
+                    if (mirrored){
+                        kloc = invertLocation(kloc);
+                    }
+                    if (position.isInMate(position.getToPlay()) || flagged){
+                        oloc = position.stringToInt(position.getKingLocation(position.getOpponent(position.getToPlay())));
+                        if (mirrored){
+                            oloc = invertLocation(oloc);
+                        }
+                    }
+                }
                 boolean white = true;
                 for(int x = 0; x < 8; x++){
                     for(int y = 0; y < 8; y++){
@@ -227,6 +294,26 @@ public class Main {
                         g.setColor(white ? Color.LIGHT_GRAY : Color.DARK_GRAY);
 
                         g.fillRect(fieldSize * y, fieldSize * x, fieldSize, fieldSize);
+
+                        if (wk != null && wk[0] == x && wk[1] == y){
+                            g.setColor(Color.CYAN);
+                            g.fillOval(wk[1]*fieldSize, wk[0]*fieldSize, fieldSize, fieldSize);
+                        }
+
+                        if (bk != null && bk[0] == x && bk[1] == y){
+                            g.setColor(Color.CYAN);
+                            g.fillOval(bk[1]*fieldSize, bk[0]*fieldSize, fieldSize, fieldSize);
+                        }
+
+                        if (kloc != null && kloc[0] == x && kloc[1] == y){
+                            g.setColor(Color.RED);
+                            g.fillOval(kloc[1]*fieldSize, kloc[0]*fieldSize, fieldSize, fieldSize);
+                        }
+
+                        if (oloc != null && oloc[0] == x && oloc[1] == y){
+                            g.setColor(Color.GREEN);
+                            g.fillOval(oloc[1]*fieldSize, oloc[0]*fieldSize, fieldSize, fieldSize);
+                        }
 
                         if(piece != null){
                             g.drawImage(piece.getColor() == de.amg.chess.model.Color.WHITE ? Pieces.white_images.get(piece.getType()) : Pieces.black_images.get(piece.getType()), y * fieldSize, x * fieldSize, this); // x and y switch is intentional
@@ -278,6 +365,7 @@ public class Main {
                 add(positionResetButton);
                 add(loadPositionButton);
                 add(savePositionButton);
+                add(stopClocksButton);
                 add(scrollPane);
                 revalidate();
             }
@@ -293,6 +381,9 @@ public class Main {
         gameFrame.addMouseListener(new MouseListener() {
             @Override
             public void mouseReleased(MouseEvent e) {
+                if (position.isInMate(position.getToPlay()) || position.isInRemis() || whiteClock.hasRunOut() || blackClock.hasRunOut()){
+                    return;
+                }
                 if (promote){
                     int xval = fieldSize*py;
                     int yval = fieldSize*px;
@@ -313,6 +404,14 @@ public class Main {
                             if (move.getDest().equals(position.intToString(px, py)) && move.getPromote() == type){
                                 move.apply();
                                 movesArea.append(move.toString() + " ");
+                                if (position.getToPlay() == de.amg.chess.model.Color.WHITE){
+                                    blackClock.stop();
+                                    whiteClock.start();
+                                }
+                                else{
+                                    whiteClock.stop();
+                                    blackClock.start();
+                                }
                                 break;
                             }
                         }
@@ -358,6 +457,14 @@ public class Main {
                             legal = true;
                             move.apply();
                             movesArea.append(move.toString() + " ");
+                            if (position.getToPlay() == de.amg.chess.model.Color.WHITE){
+                                blackClock.stop();
+                                whiteClock.start();
+                            }
+                            else{
+                                whiteClock.stop();
+                                blackClock.start();
+                            }
                             break;
                         }
                     }
