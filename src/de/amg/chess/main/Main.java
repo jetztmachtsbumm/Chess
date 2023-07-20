@@ -77,23 +77,21 @@ public class Main {
         menuFrame.setTitle("Chess");
         menuFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
-        JButton singleplayerButton = new JButton("Singleplayer");
+        JLabel versionLabel = new JLabel("Version from 20/07/23");
         JButton multiplayerButton = new JButton("Multiplayer");
         JButton quitButton = new JButton("Quit");
 
-        singleplayerButton.setBounds(130, 50, 150, 50);
+        versionLabel.setBounds(140, 50, 150, 50);
         multiplayerButton.setBounds(130, 150, 150, 50);
         quitButton.setBounds(130, 250, 150, 50);
 
-        singleplayerButton.addActionListener(null);
         multiplayerButton.addActionListener(e -> loadGameWindow());
         quitButton.addActionListener(e -> menuFrame.dispose());
 
-        singleplayerButton.setFocusPainted(false);
         multiplayerButton.setFocusPainted(false);
         quitButton.setFocusPainted(false);
 
-        menuFrame.add(singleplayerButton);
+        menuFrame.add(versionLabel);
         menuFrame.add(multiplayerButton);
         menuFrame.add(quitButton);
 
@@ -302,6 +300,7 @@ public class Main {
                     }
                     whiteClock.stop();
                     blackClock.stop();
+                    movesArea.append("½ - ½");
                 }
                 else if (position.isInCheck(position.getToPlay()) || flagged || resigned != null){
                     kloc = position.stringToInt(position.getKingLocation(resigned == null ? position.getToPlay() : resigned));
@@ -315,6 +314,12 @@ public class Main {
                         }
                         whiteClock.stop();
                         blackClock.stop();
+                        if (position.isInMate(de.amg.chess.model.Color.WHITE) || whiteClock.hasRunOut() || resigned == de.amg.chess.model.Color.WHITE){
+                            movesArea.append("0 - 1");
+                        }
+                        else if (position.isInMate(de.amg.chess.model.Color.BLACK) || blackClock.hasRunOut() || resigned == de.amg.chess.model.Color.BLACK){
+                            movesArea.append("1 - 0");
+                        }
                     }
                 }
                 boolean white = true;
