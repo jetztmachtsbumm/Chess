@@ -7,7 +7,7 @@ import java.io.IOException;
 
 public abstract class Images {
 
-    public static final String path = "./src/Images";
+    public static final String path = "./Images";
 
     public static final Image B_KING = loadImage(path + "/bKing.png");
     public static final Image B_QUEEN = loadImage(path + "/bQueen.png");
